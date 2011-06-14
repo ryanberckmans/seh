@@ -1,3 +1,5 @@
 
 * seh: structured event handler
 
+* seh rhymes with meh
+
