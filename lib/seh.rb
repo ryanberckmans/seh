@@ -1,5 +1,6 @@
 require "seh/version"
 require "seh/event_type"
+require "seh/event_target"
 
 module Seh
   class << self
