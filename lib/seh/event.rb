@@ -1,3 +1,5 @@
+require 'ostruct'
+
 module Seh
   module Private
     class EventData
@@ -25,8 +27,9 @@ module Seh
     end
   end
 
-  class Event
+  class Event < OpenStruct
     def initialize(target, &block)
+      super()
       raise "Event expects a target" unless target
       raise "Event expects the target to include EventTarget" unless target.class.include? EventTarget
       @state = Private::EventStateReady
@@ -51,6 +54,7 @@ module Seh
     end
 
     def match_type( event_type )
+      event_type = EventType.new event_type unless event_type.is_a? EventType
       event_type.match @data.types
     end
 

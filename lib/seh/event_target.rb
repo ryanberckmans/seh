@@ -1,7 +1,7 @@
 module Seh
   module EventTarget
 
-    def bind( event_type, &block )
+    def bind( event_type=nil, &block )
       raise "EventTarget::bind expects a block" unless block
       @_binds ||= []
       bind = Private::EventBind.new( event_type, &block )
@@ -9,7 +9,7 @@ module Seh
       ->{ @_binds.delete bind }
     end
 
-    def bind_once( event_type, &block )
+    def bind_once( event_type=nil, &block )
       return unless block
       disconnect = self.bind(event_type) { |event| disconnect.call; block.call event }
       disconnect

@@ -13,7 +13,7 @@ module Seh
 
     private
     def _match(types)
-      types.each { |t| return true if t == self.type }
+      return true if not self.type or types.include? self.type
       false
     end
 
