@@ -1,17 +1,17 @@
 module Seh
   module EventTarget
     def bind( event_type, &block )
-      return unless block
+      raise "EventTarget::bind expects a block" unless block
       @_binds ||= []
-      @_binds << Private::EventBind.new( event_type, &block )
-      connector = nil
-      connector
+      bind = Private::EventBind.new( event_type, &block )
+      @_binds << bind
+      ->{ @_binds.delete bind }
     end
 
-    def bind_once ( event_type, &block )
+    def bind_once( event_type, &block )
       return unless block
-      connector = self.bind(event_type) { |event| block.call event; connector.disconnect }
-      connector
+      disconnect = self.bind(event_type) { |event| disconnect.call; block.call event }
+      disconnect
     end
 
     def each_bind
@@ -25,7 +25,6 @@ module Seh
       attr_accessor :event_type, :block
 
       def initialize( event_type, &block )
-        raise "EventBind.new expected block" unless block
         event_type = EventType.new event_type unless event_type.is_a? EventType
         @event_type = event_type
         @block = block
