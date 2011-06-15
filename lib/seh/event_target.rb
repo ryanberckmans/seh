@@ -1,8 +1,7 @@
 module Seh
   module EventTarget
-
     def bind( event_type=nil, &block )
-      raise "EventTarget::bind expects a block" unless block
+      raise "EventTarget::bind expects a block" unless block_given?
       @_binds ||= []
       bind = Private::EventBind.new( event_type, &block )
       @_binds << bind
@@ -10,14 +9,14 @@ module Seh
     end
 
     def bind_once( event_type=nil, &block )
-      return unless block
+      return unless block_given?
       disconnect = self.bind(event_type) { |event| disconnect.call; block.call event }
       disconnect
     end
 
     def each_bind
       @_binds ||= []
-      @_binds.each { |b| yield b }
+      @_binds.dup.each { |b| yield b }
       nil
     end
   end

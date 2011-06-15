@@ -3,12 +3,16 @@ require 'ostruct'
 module Seh
   module Private
     class EventData
-      attr_accessor :types, :target, :time
+      attr_accessor :types, :target, :time, :start, :finish
 
       def initialize
         @types = []
         @target = nil
         @time = Time.now
+
+        # staged handlers
+        @start = []
+        @finish = []
       end
     end
 
@@ -42,6 +46,8 @@ module Seh
       raise "Event may only be dispatched once" unless @state == Private::EventStateReady
       @state = Private::EventStateInflight
       @data.target.each_bind { |bind| bind.block.call self if bind.event_type.match @data.types }
+      @data.start.each { |block| block.call self }
+      @data.finish.each { |block| block.call self }
       @state = Private::EventStateDone
     end
 
@@ -60,6 +66,14 @@ module Seh
 
     def time
       @data.time.dup
+    end
+
+    def start(&block)
+      @data.start << block if block_given?
+    end
+
+    def finish(&block)
+      @data.finish << block if block_given?
     end
   end
 end
