@@ -1,6 +1,6 @@
 module Seh
   class EventType
-    attr_accessor :type
+    attr_reader :type
 
     def initialize( type )
       @type = type
