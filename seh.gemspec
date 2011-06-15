@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Ryan Berckmans"]
   s.email       = ["ryan.berckmans@gmail.com"]
   s.homepage    = "https://github.com/ryanberckmans/seh"
-  s.summary     = "event handling similar to w3c dom events; pre-alpha wip"
+  s.summary     = "pure ruby event handling similar to w3c dom events; pre-alpha wip"
   s.description = ""
 
   s.rubyforge_project = "seh"
