@@ -1,5 +1,6 @@
 module Seh
   module EventTarget
+
     def bind( event_type, &block )
       raise "EventTarget::bind expects a block" unless block
       @_binds ||= []
@@ -15,6 +16,7 @@ module Seh
     end
 
     def each_bind
+      @_binds ||= []
       @_binds.each { |b| yield b }
       nil
     end
@@ -22,7 +24,7 @@ module Seh
 
   module Private
     class EventBind
-      attr_accessor :event_type, :block
+      attr_reader :event_type, :block
 
       def initialize( event_type, &block )
         event_type = EventType.new event_type unless event_type.is_a? EventType
