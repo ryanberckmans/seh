@@ -7,9 +7,9 @@ Gem::Specification.new do |s|
   s.version     = Seh::VERSION
   s.authors     = ["Ryan Berckmans"]
   s.email       = ["ryan.berckmans@gmail.com"]
-  s.homepage    = ""
-  s.summary     = %q{TODO: Write a gem summary}
-  s.description = %q{TODO: Write a gem description}
+  s.homepage    = "https://github.com/ryanberckmans/seh"
+  s.summary     = "event handling similar to w3c dom events; pre-alpha wip"
+  s.description = ""
 
   s.rubyforge_project = "seh"
 
