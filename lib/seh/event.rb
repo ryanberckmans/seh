@@ -68,7 +68,7 @@ module Seh
     def dispatch
       raise "Event may only be dispatched once" unless @state == Private::EventStateReady
       @state = Private::EventStateInflight
-      @data.target.each_bind { |bind| bind.block.call self if bind.event_type.match @data.types }
+      collect_targets.each { |t| t.each_bind { |bind| bind.block.call self if bind.event_type.match @data.types } }
       @data.staged_handlers.each_key.sort.each { |stage| @data.staged_handlers[stage].each { |block| block.call self } }
       @state = Private::EventStateDone
     end
@@ -136,5 +136,15 @@ module Seh
       @data.staged_handlers[stage] << block
       nil
     end
+
+    def collect_targets
+      targets_working = [@data.target]
+      targets_final = []
+      while t = targets_working.shift do
+        targets_final << t
+        targets_working << t.parents if t.respond_to? :parents
+      end
+      targets_final
+    end # gather_target_parents
   end
 end
