@@ -5,8 +5,14 @@ module Seh
     START = 0
     BEFORE = 100
 
+    BEFORE_SUCCESS = 250
+    BEFORE_FAILURE = 250
+
     SUCCESS = 500
     FAILURE = 500
+
+    AFTER_SUCCESS = 750
+    AFTER_FAILURE = 750
 
     AFTER = 900
     FINISH = 1000
@@ -92,12 +98,28 @@ module Seh
       staged_handler Private::BEFORE, block if block_given?
     end
 
+    def before_success(&block)
+      staged_handler Private::BEFORE_SUCCESS, ->e{ block.call e if e.success? } if block_given?
+    end
+
+    def before_failure(&block)
+      staged_handler Private::BEFORE_FAILURE, ->e{ block.call e unless e.success? } if block_given?
+    end
+
     def success(&block)
       staged_handler Private::SUCCESS, ->e{ block.call e if e.success? } if block_given?
     end
 
     def failure(&block)
       staged_handler Private::FAILURE, ->e{ block.call e unless e.success? } if block_given?
+    end
+
+    def after_success(&block)
+      staged_handler Private::AFTER_SUCCESS, ->e{ block.call e if e.success? } if block_given?
+    end
+
+    def after_failure(&block)
+      staged_handler Private::AFTER_FAILURE, ->e{ block.call e unless e.success? } if block_given?
     end
 
     def after(&block)
