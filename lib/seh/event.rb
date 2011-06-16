@@ -3,16 +3,20 @@ require 'ostruct'
 module Seh
   module Private
     START = 0
+    BEFORE = 100
 
+    AFTER = 900
     FINISH = 1000
 
     class EventData
       attr_accessor :types, :target, :time, :staged_handlers
+      attr_reader :success
 
       def initialize
         @types = []
         @target = nil
         @time = Time.now
+        @success = true
 
         # staged handlers
         @staged_handlers = {}
@@ -45,6 +49,10 @@ module Seh
       instance_eval(&block) if block
     end
 
+    def success?
+      @data.success
+    end
+
     def dispatch
       raise "Event may only be dispatched once" unless @state == Private::EventStateReady
       @state = Private::EventStateInflight
@@ -72,6 +80,14 @@ module Seh
 
     def start(&block)
       staged_handler Private::START, block if block_given?
+    end
+
+    def before(&block)
+      staged_handler Private::BEFORE, block if block_given?
+    end
+
+    def after(&block)
+      staged_handler Private::AFTER, block if block_given?
     end
 
     def finish(&block)
