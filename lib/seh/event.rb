@@ -142,9 +142,9 @@ module Seh
       targets_final = []
       while t = targets_working.shift do
         targets_final << t
-        targets_working << t.parents if t.respond_to? :parents
+        targets_working.concat t.parents if t.respond_to? :parents
       end
-      targets_final
-    end # gather_target_parents
+      targets_final.uniq
+    end
   end
 end
