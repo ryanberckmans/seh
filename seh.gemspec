@@ -9,7 +9,15 @@ Gem::Specification.new do |s|
   s.email       = ["ryan.berckmans@gmail.com"]
   s.homepage    = "https://github.com/ryanberckmans/seh"
   s.summary     = "pure ruby event handling similar to w3c dom events; pre-alpha wip"
-  s.description = ""
+  s.description = "Pure ruby event handling similar to w3c dom events. Lots of bells and whistles to support complex event handling as required by stuff like video games.
++ event handling in a synchronous specific order
++ event targets can have multiple parents and common ancestors; event propagation does a breadth first search traversal over a directed acyclic event target graph
++ staged callbacks: event.before { .. }; event.after { .. }
++ staged callbacks allow for an ancestor to influence affect of event on a descendant: ancestor.before { |event| event.x = 5 }; descendant.after { |event| puts event.x }
++ events can have multiple types, and types can inherit from other types
++ bind callbacks using event type filtering: node.bind(overcast AND (rain OR snow)) { |event| callback! }
++ optional event failure: event.success { yay! }; event.failure { oops! }
++ events on stack don't care about other events above/below - event A, currently executing, can create/dispatch/finish another event B"
 
   s.rubyforge_project = "seh"
 
