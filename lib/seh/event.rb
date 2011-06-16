@@ -5,12 +5,14 @@ module Seh
     START = 0
     BEFORE = 100
 
+    SUCCESS = 500
+    FAILURE = 500
+
     AFTER = 900
     FINISH = 1000
 
     class EventData
-      attr_accessor :types, :target, :time, :staged_handlers
-      attr_reader :success
+      attr_accessor :types, :target, :time, :staged_handlers, :success
 
       def initialize
         @types = []
@@ -49,6 +51,10 @@ module Seh
       instance_eval(&block) if block
     end
 
+    def fail
+      @data.success = false
+    end
+
     def success?
       @data.success
     end
@@ -84,6 +90,14 @@ module Seh
 
     def before(&block)
       staged_handler Private::BEFORE, block if block_given?
+    end
+
+    def success(&block)
+      staged_handler Private::SUCCESS, ->e{ block.call e if e.success? } if block_given?
+    end
+
+    def failure(&block)
+      staged_handler Private::FAILURE, ->e{ block.call e unless e.success? } if block_given?
     end
 
     def after(&block)
