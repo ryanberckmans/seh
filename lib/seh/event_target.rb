@@ -21,7 +21,7 @@ module Seh
     end
   end
 
-  module Private
+  module Private # :nodoc: all
     class EventBind
       attr_reader :event_type, :block
 
