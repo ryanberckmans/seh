@@ -18,10 +18,11 @@ module Seh
     FINISH = 1000
 
     class EventData
-      attr_accessor :types, :target, :time, :staged_handlers, :success
+      attr_accessor :types, :type_map, :target, :time, :staged_handlers, :success
 
       def initialize
         @types = []
+        @type_map = {}
         @target = nil
         @time = Time.now
         @success = true
@@ -35,6 +36,26 @@ module Seh
       class << self
         def type( data, t )
           data.types << t
+          apply_type_map data
+        end
+
+        def type_map( data, map = {} )
+          map.each_pair do |type, implied_types|
+            data.type_map[type] ||= []
+            data.type_map[type].concat implied_types
+            data.type_map[type].uniq!
+          end
+          apply_type_map data
+        end
+
+        private
+        def apply_type_map( data )
+          while true
+            original_size = data.types.size
+            data.type_map.each_pair { |type, implied_types| data.types.concat implied_types if data.types.include? type }
+            data.types.uniq!
+            break if original_size = data.types.size
+          end
         end
       end
     end
@@ -66,7 +87,7 @@ module Seh
     end
 
     def dispatch
-      raise "Event may only be dispatched once" unless @state == Private::EventStateReady
+      raise "Event#dispatch may only be called once" unless @state == Private::EventStateReady
       @state = Private::EventStateInflight
       collect_targets.each { |t| t.each_bind { |bind| bind.block.call self if bind.event_type.match @data.types } }
       @data.staged_handlers.each_key.sort.each { |stage| @data.staged_handlers[stage].each { |block| block.call self } }
@@ -79,6 +100,12 @@ module Seh
 
     def type( event_type )
       @state.type @data, event_type
+      nil
+    end
+
+    def type_map( map )
+      @state.type_map @data, map
+      nil
     end
 
     def match_type( event_type )
