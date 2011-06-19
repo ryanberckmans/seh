@@ -2,8 +2,9 @@
 * seh: structured event handler
 
 ** Roadmap
-+ examples
++ documentation
 + unit tests (my bad)
++ examples
 
 ** v0.1.0
 seh API is fully implemented :)
