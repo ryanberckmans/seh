@@ -1,3 +1,4 @@
 module Seh
-  VERSION = "0.0.3" # :nodoc:
+  # @private
+  VERSION = "0.1.0"
 end

@@ -1,7 +1,8 @@
 require 'ostruct'
 
 module Seh
-  module Private # :nodoc: all
+  # @private
+  module Private
     START = 0
     BEFORE = 100
 

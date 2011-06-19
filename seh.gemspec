@@ -17,8 +17,4 @@ Gem::Specification.new do |s|
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
-
-  s.rdoc_options << '--title' << 'seh - structured event handling' \
-                 << '--main'  << 'README.org'
-  s.extra_rdoc_files = ['README.org']
 end

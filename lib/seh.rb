@@ -5,17 +5,17 @@ require "seh/event"
 
 module Seh
   class << self
-    # alias for Seh::EventType::And
+    # @note alias of {EventType::And}
     def and( *types )
       EventType::And.new *types
     end
 
-    # alias for Seh::EventType::Or
+    # @note alias of {EventType::Or}
     def or( *types )
       EventType::Or.new *types
     end
 
-    # alias for Seh::EventType::Not
+    # @note alias of {EventType::Not}
     def not( type )
       EventType::Not.new type
     end
