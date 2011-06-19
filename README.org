@@ -4,10 +4,9 @@
 ** Roadmap
 + examples
 + unit tests (my bad)
-+ iteration, as I'm using seh in a major project
 
 ** v0.1.0
 seh API is fully implemented :)
 
-** Iteration
+** Contact
 Please send (welcome) feedback and bug reports to ryan.berckmans@gmail.com.
