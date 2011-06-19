@@ -1,4 +1,10 @@
 
-* seh: structured event handler
+* Seh: structured event handler
 
+* Roadmap
 
+* v0.1.0
+Seh API is fully implemented
+
+* Bugs
+Please send bugs to ryan.berckmans@gmail.com!
