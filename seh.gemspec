@@ -8,16 +8,8 @@ Gem::Specification.new do |s|
   s.authors     = ["Ryan Berckmans"]
   s.email       = ["ryan.berckmans@gmail.com"]
   s.homepage    = "https://github.com/ryanberckmans/seh"
-  s.summary     = "pure ruby event handling similar to w3c dom events; pre-alpha wip"
-  s.description = "Pure ruby event handling similar to w3c dom events. Lots of bells and whistles to support complex event handling as required by stuff like video games.
-+ event handling in a synchronous specific order
-+ event targets can have multiple parents and common ancestors; event propagation does a breadth first search traversal over a directed acyclic event target graph
-+ staged callbacks: event.before { .. }; event.after { .. }
-+ staged callbacks allow for an ancestor to influence affect of event on a descendant: ancestor.before { |event| event.x = 5 }; descendant.after { |event| puts event.x }
-+ events can have multiple types, and types can inherit from other types
-+ bind callbacks using event type filtering: node.bind(overcast AND (rain OR snow)) { |event| callback! }
-+ optional event failure: event.success { yay! }; event.failure { oops! }
-+ events on stack don't care about other events above/below - event A, currently executing, can create/dispatch/finish another event B"
+  s.summary     = "Structured event handler. Pure ruby event handling similar to w3c dom events; alpha wip."
+  s.description = "#{s.summary} Lots of bells and whistles to support complex event handling as required by stuff like video games. Event handling in a synchronous specific order. Events 'bubble', and event targets can have multiple parents and common ancestors. Staged event callbacks: event.before { "the united states of" }; event.after { "america" }. Staged callbacks allow an ancestor to influence affect of event on a descendant: ancestor.before { |event| event.damage *= 2 }; descendant.after { |event| player.health -= event.damage }. Events use 'tag-style' types: event.type :hostile ; event.type :spell. Handle only events which pass a filter: player.bind( Seh::and :hostile, Seh::not( :spell ) ) { |event| 'Hostile non-spell!!' }. Optional event failure: event.fail; event.success { 'yay!' }; event.failure { 'oops!' }. Event inherits from OpenStruct for dynamic properties: event.omgs = 'omgs a dynamic attribute'"
 
   s.rubyforge_project = "seh"
 
