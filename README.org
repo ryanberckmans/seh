@@ -1,10 +1,13 @@
 
-* Seh: structured event handler
+* seh: structured event handler
 
-* Roadmap
+** Roadmap
++ examples
++ unit tests (my bad)
++ iteration, as I'm using seh in a major project
 
-* v0.1.0
-Seh API is fully implemented
+** v0.1.0
+seh API is fully implemented :)
 
-* Bugs
-Please send bugs to ryan.berckmans@gmail.com!
+** Iteration
+Please send (welcome) feedback and bug reports to ryan.berckmans@gmail.com.
