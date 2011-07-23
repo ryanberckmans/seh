@@ -4,11 +4,11 @@ module Seh
   # @private
   module Private
     class EventData
-      attr_accessor :types, :target, :time, :staged_handlers, :success
+      attr_accessor :types, :targets, :time, :staged_handlers, :success
 
       def initialize
         @types = []
-        @target = nil
+        @targets = []
         @time = Time.now
         @success = true
 
@@ -22,6 +22,11 @@ module Seh
         def type( data, t )
           data.types << t
         end
+
+        def target( data, target )
+          raise "Seh::Event expects a non-nil target to include EventTarget" unless target and target.class.include? EventTarget
+          data.targets << target
+        end
       end
     end
 
@@ -33,13 +38,10 @@ module Seh
   end
 
   class Event < OpenStruct
-    def initialize(target, &block)
-      super()
-      raise "Event expects a target" unless target
-      raise "Event expects the target to include EventTarget" unless target.class.include? EventTarget
+    def initialize(&block)
+      super
       @state = Private::EventStateReady
       @data = Private::EventData.new
-      @data.target = target
       instance_eval(&block) if block
     end
 
@@ -59,8 +61,9 @@ module Seh
       @state = Private::EventStateDone
     end
 
-    def target
-      @data.target
+    def target( target )
+      @state.target @data, target
+      nil
     end
 
     def type( event_type )
@@ -97,7 +100,7 @@ module Seh
     end
 
     def collect_targets
-      targets_working = [@data.target]
+      targets_working = @data.targets.dup
       targets_final = []
       while t = targets_working.shift do
         targets_final << t
