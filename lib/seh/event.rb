@@ -38,11 +38,13 @@ module Seh
   end
 
   class Event < OpenStruct
-    def initialize(&block)
+    def initialize(opts={}, &block)
       super
+      opts[:dispatch] ||= true
       @state = Private::EventStateReady
       @data = Private::EventData.new
       instance_eval(&block) if block
+      dispatch if @state == Private::EventStateReady and opts[:dispatch]
     end
 
     def fail
