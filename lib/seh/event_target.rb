@@ -5,7 +5,7 @@ module Seh
       @_binds ||= []
       bind = Private::EventBind.new( event_type, &block )
       @_binds << bind
-      ->{ @_binds.delete bind }
+      BindDisconnector.new ->{ @_binds.delete bind; nil }
     end
 
     def bind_once( event_type=nil, &block )
@@ -18,6 +18,16 @@ module Seh
       @_binds ||= []
       @_binds.dup.each { |b| yield b }
       nil
+    end
+
+    class BindDisconnector
+      def initialize( disconnect_proc )
+        @disconnect_proc = disconnect_proc
+      end
+
+      def disconnect
+        @disconnect_proc.call
+      end
     end
   end
 
