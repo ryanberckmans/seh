@@ -3,27 +3,11 @@ require 'ostruct'
 module Seh
   # @private
   module Private
-    START = 0
-    BEFORE = 100
-
-    BEFORE_SUCCESS = 250
-    BEFORE_FAILURE = 250
-
-    SUCCESS = 500
-    FAILURE = 500
-
-    AFTER_SUCCESS = 750
-    AFTER_FAILURE = 750
-
-    AFTER = 900
-    FINISH = 1000
-
     class EventData
-      attr_accessor :types, :type_map, :target, :time, :staged_handlers, :success
+      attr_accessor :types, :target, :time, :staged_handlers, :success
 
       def initialize
         @types = []
-        @type_map = {}
         @target = nil
         @time = Time.now
         @success = true
@@ -37,26 +21,6 @@ module Seh
       class << self
         def type( data, t )
           data.types << t
-          apply_type_map data
-        end
-
-        def type_map( data, map = {} )
-          map.each_pair do |type, implied_types|
-            data.type_map[type] ||= []
-            data.type_map[type].concat implied_types
-            data.type_map[type].uniq!
-          end
-          apply_type_map data
-        end
-
-        private
-        def apply_type_map( data )
-          while true
-            original_size = data.types.size
-            data.type_map.each_pair { |type, implied_types| data.types.concat implied_types if data.types.include? type }
-            data.types.uniq!
-            break if original_size = data.types.size
-          end
         end
       end
     end
@@ -104,11 +68,6 @@ module Seh
       nil
     end
 
-    def type_map( map )
-      @state.type_map @data, map
-      nil
-    end
-
     def match_type( event_type )
       event_type = EventType.new event_type unless event_type.is_a? EventType
       event_type.match @data.types
@@ -118,44 +77,16 @@ module Seh
       @data.time.dup
     end
 
-    def start(&block)
-      staged_handler Private::START, block if block_given?
+    def bind( priority, &block )
+      staged_handler priority, block if block_given?
     end
 
-    def before(&block)
-      staged_handler Private::BEFORE, block if block_given?
-    end
+    def bind_success( priority, &block )
+      staged_handler priority, ->e{ block.call e if e.success? } if block_given?
+   end
 
-    def before_success(&block)
-      staged_handler Private::BEFORE_SUCCESS, ->e{ block.call e if e.success? } if block_given?
-    end
-
-    def before_failure(&block)
-      staged_handler Private::BEFORE_FAILURE, ->e{ block.call e unless e.success? } if block_given?
-    end
-
-    def success(&block)
-      staged_handler Private::SUCCESS, ->e{ block.call e if e.success? } if block_given?
-    end
-
-    def failure(&block)
-      staged_handler Private::FAILURE, ->e{ block.call e unless e.success? } if block_given?
-    end
-
-    def after_success(&block)
-      staged_handler Private::AFTER_SUCCESS, ->e{ block.call e if e.success? } if block_given?
-    end
-
-    def after_failure(&block)
-      staged_handler Private::AFTER_FAILURE, ->e{ block.call e unless e.success? } if block_given?
-    end
-
-    def after(&block)
-      staged_handler Private::AFTER, block if block_given?
-    end
-
-    def finish(&block)
-      staged_handler Private::FINISH, block if block_given?
+    def bind_fail( priority, &block )
+      staged_handler priority, ->e{ block.call e unless e.success? } if block_given?
     end
 
     private
@@ -170,7 +101,7 @@ module Seh
       targets_final = []
       while t = targets_working.shift do
         targets_final << t
-        targets_working.concat t.parents if t.respond_to? :parents
+        targets_working.concat t.observers if t.respond_to? :observers
       end
       targets_final.uniq
     end
