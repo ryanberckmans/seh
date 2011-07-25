@@ -1,3 +1,4 @@
+require 'set'
 require 'ostruct'
 
 module Seh
@@ -8,7 +9,7 @@ module Seh
 
       def initialize
         @types = []
-        @targets = []
+        @targets = Set.new
         @time = Time.now
         @success = true
 
@@ -63,8 +64,8 @@ module Seh
       @state = Private::EventStateDone
     end
 
-    def target( target )
-      @state.target @data, target
+    def target( *targets )
+      targets.each { |t| @state.target @data, t }
       nil
     end
 
@@ -102,7 +103,7 @@ module Seh
     end
 
     def collect_targets
-      targets_working = @data.targets.dup
+      targets_working = @data.targets.dup.to_a
       targets_final = []
       while t = targets_working.shift do
         targets_final << t
