@@ -69,8 +69,8 @@ module Seh
       nil
     end
 
-    def type( event_type )
-      @state.type @data, event_type
+    def type( *event_types )
+      event_types.each { |t| @state.type @data, t }
       nil
     end
 
