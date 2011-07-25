@@ -33,8 +33,9 @@ def damage( event, dealer, receiver, damage )
   event.receiver = receiver
   event.damage = damage
   
-  event.start { "damage started: #{dealer.name} doing #{damage} to #{receiver.name}" }
-  event.finish_success { receiver.hp -= event.damage }
+  event.start { puts "damage started: #{dealer.name} doing #{damage} to #{receiver.name}" }
+  event.finish_success { receiver.hp -= event.damage; puts "damage finish success: #{dealer.name} did #{damage} to #{receiver.name}" }
+  event.finish_fail { receiver.hp -= event.damage; puts "damage finish fail: #{dealer.name} failed to do #{damage} to #{receiver.name}" }
 
   hostile event, dealer, receiver
 end
@@ -49,8 +50,9 @@ def hostile( event, aggressor, aggressee )
   event.aggressor = aggressor
   event.aggressee = aggressee
 
-  event.finish_success { puts "hostile: #{aggressor.name} succeeded a hostile action against #{aggressee.name}" }
-  event.finish_failure { puts "hostile: #{aggressor.name} failed a hostile action against #{aggressee.name}" }
+  event.start { puts "hostile start: #{aggressor.name} on #{aggressee.name}" }
+  event.finish_success { puts "hostile finish success: #{aggressor.name} on #{aggressee.name}" }
+  event.finish_failure { puts "hostile finish fail: #{aggressor.name} on #{aggressee.name}" }
 end
 
 
@@ -59,16 +61,17 @@ end
 
 # reduce incoming damage by 3
 def shield_of_the_ancients( mob )
-  mob.bind(:damage) { |event| event.bind(DAMAGE_ADD) { event.damage -= 3; puts "shield of ancients: damage to #{event.receiver} reduced to #{event.damage}" } }
+  mob.bind(:damage) { |event| event.bind(DAMAGE_ADD) { event.damage -= 3; puts "shield of the ancients (#{mob.name}): damage reduced to #{event.damage}" } }
 end
 
 # for one damage event, reverse the damage back to the dealer
 def reflexive_barrier(mob)
-  mob.bind_once(:damage) { |event| event.start { temp = event.dealer; event.dealer = event.receiver; event.receiver = temp; puts "reflexive barrier: damage reflected back at #{event.receiver}" } }
+  mob.bind_once(:damage) { |event| event.start { temp = event.dealer; event.dealer = event.receiver; event.receiver = temp; puts "reflexive barrier (#{mob.name}): damage reflected back at #{event.receiver.name}" } }
 end
 
+# disable hostile action to or from mob
 def serenity(mob)
-  mob.bind(:hostile) { |event| event.fail; puts "serenity: preventing hostile action by #{event.aggressor} on #{event.aggressee}" }
+  mob.bind(:hostile) { |event| event.fail; puts "serenity (#{mob.name}): preventing hostile action by #{event.aggressor.name} on #{event.aggressee.name}" }
 end
 
 ############################
