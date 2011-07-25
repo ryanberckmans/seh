@@ -10,8 +10,7 @@ module Seh
 
     def bind_once( event_type=nil, &block )
       return unless block_given?
-      disconnect = self.bind(event_type) { |event| disconnect.call; block.call event }
-      disconnect
+      bind = self.bind(event_type) { |event| bind.disconnect; block.call event }
     end
 
     def each_bind
