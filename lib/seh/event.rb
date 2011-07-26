@@ -5,7 +5,7 @@ module Seh
   # @private
   module Private
     class EventData
-      attr_accessor :types, :targets, :time, :staged_handlers, :success
+      attr_accessor :types, :targets, :time, :priority_handlers, :start_handlers, :finish_handlers, :success
 
       def initialize
         @types = []
@@ -13,8 +13,9 @@ module Seh
         @time = Time.now
         @success = true
 
-        # staged handlers
-        @staged_handlers = {}
+        @start_handlers = []
+        @finish_handlers = []
+        @priority_handlers = {}
       end
     end
 
@@ -60,7 +61,9 @@ module Seh
       raise "Event#dispatch may only be called once" unless @state == Private::EventStateReady
       @state = Private::EventStateInflight
       collect_targets.each { |t| t.each_bind { |bind| bind.block.call self if bind.event_type.match @data.types } }
-      @data.staged_handlers.each_key.sort.each { |stage| @data.staged_handlers[stage].each { |block| block.call self } }
+      @data.start_handlers.each { |block| block.call self }
+      @data.priority_handlers.each_key.sort.each { |stage| @data.priority_handlers[stage].each { |block| block.call self } }
+      @data.finish_handlers.each { |block| block.call self }
       @state = Private::EventStateDone
     end
 
@@ -84,21 +87,37 @@ module Seh
     end
 
     def bind( priority, &block )
-      staged_handler priority, block if block_given?
+      priority_handler priority, block if block_given?
     end
 
     def bind_success( priority, &block )
-      staged_handler priority, ->e{ block.call e if e.success? } if block_given?
+      priority_handler priority, ->e{ block.call e if e.success? } if block_given?
    end
 
-    def bind_fail( priority, &block )
-      staged_handler priority, ->e{ block.call e unless e.success? } if block_given?
+    def bind_failure( priority, &block )
+      priority_handler priority, ->e{ block.call e unless e.success? } if block_given?
+    end
+
+    def start( &block )
+      @data.start_handlers << block if block_given?
+    end
+
+    def finish( &block )
+      @data.finish_handlers << block if block_given?
+    end
+
+    def finish_success( &block )
+      @data.finish_handlers << ->e{ block.call e if e.success? } if block_given?
+    end
+
+    def finish_failure( &block )
+      @data.finish_handlers << ->e{ block.call e unless e.success? } if block_given?
     end
 
     private
-    def staged_handler( stage, block )
-      @data.staged_handlers[stage] ||= []
-      @data.staged_handlers[stage] << block
+    def priority_handler( stage, block )
+      @data.priority_handlers[stage] ||= []
+      @data.priority_handlers[stage] << block
       nil
     end
 
