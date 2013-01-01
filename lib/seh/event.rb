@@ -60,7 +60,9 @@ module Seh
     def dispatch
       raise "Event#dispatch may only be called once" unless @state == Private::EventStateReady
       @state = Private::EventStateInflight
-      collect_targets.each { |t| t.each_bind { |bind| bind.block.call self if bind.event_type.match @data.types } }
+      collect_targets.each do |target|
+        target.each_matching_callback(@data.types) { |callback| callback.call self }
+      end
       @data.start_handlers.each { |block| block.call self }
       @data.priority_handlers.each_key.sort.each { |stage| @data.priority_handlers[stage].each { |block| block.call self } }
       @data.finish_handlers.each { |block| block.call self }
@@ -92,7 +94,7 @@ module Seh
 
     def bind_success( priority, &block )
       priority_handler priority, ->e{ block.call e if e.success? } if block_given?
-   end
+    end
 
     def bind_failure( priority, &block )
       priority_handler priority, ->e{ block.call e unless e.success? } if block_given?
@@ -122,13 +124,14 @@ module Seh
     end
 
     def collect_targets
-      targets_working = @data.targets.dup.to_a
-      targets_final = []
-      while t = targets_working.shift do
-        targets_final << t
-        targets_working.concat t.observers if t.respond_to? :observers
-      end
-      targets_final.uniq
+      all_targets = @data.targets.dup
+      observers = Set.new
+      begin
+        original_size = all_targets.size
+        all_targets.each { |target| observers.merge target.observers }
+        all_targets.merge observers
+      end while all_targets.size != original_size
+      all_targets
     end
   end
 end
