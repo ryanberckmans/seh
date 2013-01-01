@@ -1,11 +1,14 @@
+require_relative 'event_bind'
+require_relative 'event_bind_disconnector'
+
 module Seh
   module EventTarget
-    def bind( event_type=nil, &block )
-      raise "EventTarget::bind expects a block" unless block_given?
+    def bind event_type=nil, &block
+      raise "expected a block" unless block_given?
       @_binds ||= []
-      bind = Private::EventBind.new( event_type, &block )
+      bind = EventBind.new( event_type, &block )
       @_binds << bind
-      BindDisconnector.new ->{ @_binds.delete bind; nil }
+      EventBindDisconnector.new ->{ @_binds.delete bind; nil }
     end
 
     def bind_once( event_type=nil, &block )
@@ -13,33 +16,23 @@ module Seh
       bind = self.bind(event_type) { |event| bind.disconnect; block.call event }
     end
 
-    def each_bind
+    # @private
+    # Internal use only. Used in Seh::Event.
+    # Override #observers as needed.
+    # @return [EventTarget] - array of other EventTargets observing this EventTarget
+    def observers
+      []
+    end
+
+    # @private
+    # Internal use only. Used in Seh::Event.
+    # For each bind matching the passed event_types, yield the bind's callback
+    # @yield each bind callback matching the passed event types
+    # @return nil
+    def each_matching_callback event_types
       @_binds ||= []
-      @_binds.dup.each { |b| yield b }
+      @_binds.each { |bind| yield bind.block if bind.event_type.match event_types }
       nil
     end
-
-    class BindDisconnector
-      def initialize( disconnect_proc )
-        @disconnect_proc = disconnect_proc
-      end
-
-      def disconnect
-        @disconnect_proc.call
-      end
-    end
   end
-
-  # @private
-  module Private
-    class EventBind
-      attr_reader :event_type, :block
-
-      def initialize( event_type, &block )
-        event_type = EventType.new event_type unless event_type.is_a? EventType
-        @event_type = event_type
-        @block = block
-      end
-    end # EventBind
-  end # Private
 end
