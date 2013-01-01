@@ -19,6 +19,7 @@ module Event
 
       begin
         event.add_stage :should_raise, :does_not_exist
+        raise "should not happen"
       rescue Seh::Event::StageNotFoundError => stage_not_found
       end
 
