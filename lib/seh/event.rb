@@ -5,12 +5,11 @@ module Seh
   # @private
   module Private
     class EventData
-      attr_accessor :types, :targets, :time, :priority_handlers, :start_handlers, :finish_handlers, :success
+      attr_accessor :types, :targets, :priority_handlers, :start_handlers, :finish_handlers, :success
 
       def initialize
         @types = []
         @targets = Set.new
-        @time = Time.now
         @success = true
 
         @start_handlers = []
@@ -82,10 +81,6 @@ module Seh
     def match_type( event_type )
       event_type = EventType.new event_type unless event_type.is_a? EventType
       event_type.match @data.types
-    end
-
-    def time
-      @data.time.dup
     end
 
     def bind( priority, &block )
