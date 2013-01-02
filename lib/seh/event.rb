@@ -5,12 +5,11 @@ module Seh
   # @private
   module Private
     class EventData
-      attr_accessor :types, :targets, :priority_handlers, :start_handlers, :finish_handlers, :success
+      attr_accessor :types, :targets, :priority_handlers, :start_handlers, :finish_handlers
 
       def initialize
         @types = []
         @targets = Set.new
-        @success = true
 
         @start_handlers = []
         @finish_handlers = []
@@ -48,14 +47,6 @@ module Seh
       dispatch if @state == Private::EventStateReady and opts[:dispatch]
     end
 
-    def fail
-      @data.success = false
-    end
-
-    def success?
-      @data.success
-    end
-
     def dispatch
       raise "Event#dispatch may only be called once" unless @state == Private::EventStateReady
       @state = Private::EventStateInflight
@@ -87,28 +78,12 @@ module Seh
       priority_handler priority, block if block_given?
     end
 
-    def bind_success( priority, &block )
-      priority_handler priority, ->e{ block.call e if e.success? } if block_given?
-    end
-
-    def bind_failure( priority, &block )
-      priority_handler priority, ->e{ block.call e unless e.success? } if block_given?
-    end
-
     def start( &block )
       @data.start_handlers << block if block_given?
     end
 
     def finish( &block )
       @data.finish_handlers << block if block_given?
-    end
-
-    def finish_success( &block )
-      @data.finish_handlers << ->e{ block.call e if e.success? } if block_given?
-    end
-
-    def finish_failure( &block )
-      @data.finish_handlers << ->e{ block.call e unless e.success? } if block_given?
     end
 
     private
