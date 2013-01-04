@@ -2,55 +2,46 @@ module Seh
   class EventType
     attr_reader :type
 
-    def initialize( type )
+    def initialize type
       @type = type
     end
 
-    def match(types)
-      types = [types] unless types.respond_to? :each
-      _match types
-    end
-
-    private
-    def _match(types)
-      return true if not self.type or types.include? self.type
-      false
+    # @param types - an Array of types
+    def match types
+      types.include? self.type
     end
 
     class And < EventType
-      def initialize(*types)
+      def initialize *types
         @types = []
         types.each { |t| t = EventType.new t unless t.kind_of? EventType ; @types << t }
       end
 
-      private
-      def _match(types)
+      def match types
         @types.each { |t| return false unless t.match types }
         true
       end
     end # And
 
     class Or < EventType
-      def initialize(*types)
+      def initialize *types
         @types = []
         types.each { |t| t = EventType.new t unless t.kind_of? EventType ; @types << t }
       end
 
-      private
-      def _match(types)
+      def match types
         @types.each { |t| return true if t.match types }
         false
       end
     end # Or
 
     class Not < EventType
-      def initialize(type)
+      def initialize type
         type = EventType.new type unless type.kind_of? EventType
         @type = type
       end
 
-      private
-      def _match(types)
+      def match types
         ! @type.match types
       end
     end # Not
