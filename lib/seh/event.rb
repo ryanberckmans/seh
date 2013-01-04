@@ -5,25 +5,25 @@ module Seh
   # @private
   module Private
     class EventData
-      attr_accessor :types, :targets, :priority_handlers, :start_handlers, :finish_handlers
+      attr_accessor :types, :targets, :stage_callbacks, :start_callbacks, :finish_callbacks
 
       def initialize
         @types = []
         @targets = Set.new
 
-        @start_handlers = []
-        @finish_handlers = []
-        @priority_handlers = {}
+        @start_callbacks = []
+        @finish_callbacks = []
+        @stage_callbacks = {}
       end
     end
 
     class EventStateReady
       class << self
-        def type( data, t )
+        def type data, t
           data.types << t
         end
 
-        def target( data, target )
+        def target data, target
           raise "Seh::Event expects a non-nil target to include EventTarget" unless target and target.class.include? EventTarget
           data.targets << target
         end
@@ -38,7 +38,7 @@ module Seh
   end
 
   class Event < OpenStruct
-    def initialize(opts={}, &block)
+    def initialize opts={}, &block
       super
       opts[:dispatch] ||= true
       @state = Private::EventStateReady
@@ -53,48 +53,55 @@ module Seh
       collect_targets.each do |target|
         target.each_matching_callback(@data.types) { |callback| callback.call self }
       end
-      @data.start_handlers.each { |block| block.call self }
-      @data.priority_handlers.each_key.sort.each { |stage| @data.priority_handlers[stage].each { |block| block.call self } }
-      @data.finish_handlers.each { |block| block.call self }
+      @data.start_callbacks.each { |block| block.call self }
+      each_stage do |stage|
+        @data.stage_callbacks[stage].each { |block| block.call self }
+      end
+      @data.finish_callbacks.each { |block| block.call self }
       @state = Private::EventStateDone
     end
 
-    def target( *targets )
+    def target *targets
       targets.each { |t| @state.target @data, t }
       nil
     end
 
-    def type( *event_types )
+    def type *event_types
       event_types.each { |t| @state.type @data, t }
       nil
     end
 
-    def match_type( event_type )
+    def match_type event_type
       event_type = EventType.new event_type unless event_type.is_a? EventType
       event_type.match @data.types
     end
 
-    def bind( priority, &block )
-      priority_handler priority, block if block_given?
-    end
-
-    def start( &block )
-      @data.start_handlers << block if block_given?
-    end
-
-    def finish( &block )
-      @data.finish_handlers << block if block_given?
-    end
-
-    private
-    def priority_handler( stage, block )
-      @data.priority_handlers[stage] ||= []
-      @data.priority_handlers[stage] << block
+    def bind stage, &block
+      @data.stage_callbacks[stage] = block if block_given?
       nil
     end
 
+    def start &block
+      @data.start_callbacks << block if block_given?
+      nil
+    end
+
+    def finish &block
+      @data.finish_callbacks << block if block_given?
+      nil
+    end
+
+    def add_stage new_stage, *new_stage_dependencies, &stage_test_block
+      @stages ||= []
+      @stages << new_stage
+      @stage_blocks ||= {}
+      @stage_blocks[new_stage] = stage_test_block if block_given?
+      nil
+    end
+
+    private
     def collect_targets
-      all_targets = @data.targets.dup
+      all_targets = @data.targets.dup # @data.targets must remain the original set of targets on this event, and all_targets will be mutated
       observers = Set.new
       begin
         original_size = all_targets.size
@@ -102,6 +109,12 @@ module Seh
         all_targets.merge observers
       end while all_targets.size != original_size
       all_targets
+    end
+
+    def each_stage
+      @stages ||= []
+      @stages.each { |stage| yield stage }
+      nil
     end
   end
 end
