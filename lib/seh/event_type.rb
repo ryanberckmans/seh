@@ -1,14 +1,12 @@
 module Seh
   class EventType
-    attr_reader :type
-
     def initialize type
       @type = type
     end
 
     # @param types - an Array of types
     def match types
-      types.include? self.type
+      types.include? @type
     end
 
     class And < EventType
