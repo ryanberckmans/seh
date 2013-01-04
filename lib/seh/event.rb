@@ -8,7 +8,7 @@ module Seh
       attr_accessor :types, :targets, :stage_callbacks, :start_callbacks, :finish_callbacks
 
       def initialize
-        @types = []
+        @types = Set.new
         @targets = Set.new
 
         @start_callbacks = []
@@ -16,40 +16,22 @@ module Seh
         @stage_callbacks = {}
       end
     end
-
-    class EventStateReady
-      class << self
-        def type data, t
-          data.types << t
-        end
-
-        def target data, target
-          raise "Seh::Event expects a non-nil target to include EventTarget" unless target and target.class.include? EventTarget
-          data.targets << target
-        end
-      end
-    end
-
-    class EventStateInflight
-    end
-
-    class EventStateDone
-    end
   end
 
   class Event < OpenStruct
     def initialize opts={}, &block
       super
       opts[:dispatch] ||= true
-      @state = Private::EventStateReady
+      @state = :ready
+      @stages = Set.new
       @data = Private::EventData.new
       instance_eval(&block) if block
-      dispatch if @state == Private::EventStateReady and opts[:dispatch]
+      dispatch if @state == :ready and opts[:dispatch]
     end
 
     def dispatch
-      raise "Event#dispatch may only be called once" unless @state == Private::EventStateReady
-      @state = Private::EventStateInflight
+      raise "Event#dispatch may only be called once" unless @state == :ready
+      @state = :inflight
       collect_targets.each do |target|
         target.each_matching_callback(@data.types) { |callback| callback.call self }
       end
@@ -58,16 +40,20 @@ module Seh
         @data.stage_callbacks[stage].each { |block| block.call self }
       end
       @data.finish_callbacks.each { |block| block.call self }
-      @state = Private::EventStateDone
+      @state = :done
     end
 
+    # @param targets - zero or more EventTarget objects
     def target *targets
-      targets.each { |t| @state.target @data, t }
+      raise "Event#target is disallowed after Event#dispatch is called" unless @state == :ready
+      targets.each { |target| @data.targets << target }
       nil
     end
 
+    # @param types - zero or more types to add to this Event. The Event is simultaneously all of these types
     def type *event_types
-      event_types.each { |t| @state.type @data, t }
+      raise "Event#type is disallowed after Event#dispatch is called" unless @state == :ready
+      event_types.each { |type| @data.types << type }
       nil
     end
 
@@ -77,7 +63,8 @@ module Seh
     end
 
     def bind stage, &block
-      @data.stage_callbacks[stage] = block if block_given?
+      @data.stage_callbacks[stage] ||= []
+      @data.stage_callbacks[stage] << block if block_given?
       nil
     end
 
@@ -92,7 +79,6 @@ module Seh
     end
 
     def add_stage new_stage, *new_stage_dependencies, &stage_test_block
-      @stages ||= []
       @stages << new_stage
       @stage_blocks ||= {}
       @stage_blocks[new_stage] = stage_test_block if block_given?
@@ -112,7 +98,6 @@ module Seh
     end
 
     def each_stage
-      @stages ||= []
       @stages.each { |stage| yield stage }
       nil
     end
