@@ -3,9 +3,8 @@ require 'ostruct'
 
 module Seh
   class Event < OpenStruct
-    def initialize opts={}, &block
+    def initialize
       super
-      opts[:dispatch] ||= true
       @state = :ready
       @types = Set.new
       @targets = Set.new
@@ -13,61 +12,87 @@ module Seh
       @finish_callbacks = []
       @stage_callbacks = {}
       @stages = Set.new
-      instance_eval(&block) if block
-      dispatch if @state == :ready and opts[:dispatch]
+      yield self if block_given?
     end
 
+    # Dispatch this event, notifying all targets of the event and executing any callbacks.
+    # #dispatch may only be called once
+    # Dispatch algorithm:
+    #  1. determine the full set of targets affected by this event
+    #  2. run target callbacks which match this event's types
+    #  3. run stage callbacks contained in this event; typically targets will append stage callbacks to this event using Event#bind, #start, #finish
+    #     Callback execution order:
+    #       start callbacks
+    #       stage callabcks - in the order stages were added
+    #       finish callbacks
+    #     Callbacks in the same stage have arbitrary execution order
+    # @return nil
     def dispatch
       raise "Event#dispatch may only be called once" unless @state == :ready
       @state = :inflight
-      collect_targets.each do |target|
-        target.each_matching_callback(@types) { |callback| callback.call self }
-      end
-      @start_callbacks.each { |block| block.call self }
-      each_stage do |stage|
-        @stage_callbacks[stage].each { |block| block.call self }
-      end
-      @finish_callbacks.each { |block| block.call self }
+      run_target_callbacks
+      run_stage_callbacks
       @state = :done
       nil
     end
 
+    # Add targets to this event. May not be called after or during #dispatch
     # @param targets - zero or more EventTarget objects
+    # @return nil
     def target *targets
       raise "Event#target is disallowed after Event#dispatch is called" unless @state == :ready
       targets.each { |target| @targets << target }
       nil
     end
 
+    # Add event types to this event. May not be called after or during #dispatch
     # @param types - zero or more types to add to this Event. The Event is simultaneously all of these types
+    # @return nil
     def type *event_types
       raise "Event#type is disallowed after Event#dispatch is called" unless @state == :ready
       event_types.each { |type| @types << type }
       nil
     end
 
-    def match_type event_type
+    # Return true if this event's types match the passed EventType
+    # @param event_type - an EventType to match against this event's types
+    # @return true or false - result of passed EventType#match on this event's types
+    def match_type? event_type
       event_type = EventType.new event_type unless event_type.is_a? EventType
       event_type.match @types
     end
 
+    # Bind the passed block as a callback for the passed stage
+    # @param stage - a stage which has been added using #add_stage
+    # @block - a callback receiving a single parameter, |event|, which will be added to stage's callbacks
+    # @return nil
     def bind stage, &block
       @stage_callbacks[stage] ||= []
       @stage_callbacks[stage] << block if block_given?
       nil
     end
 
+    # Bind the passed block as a start callback
+    # @block - a callback receiving a single parameter, |event|, which will be added to the start callbacks
+    # @return nil
     def start &block
       @start_callbacks << block if block_given?
       nil
     end
 
+    # Bind the passed block as a finish callback
+    # @block - a callback receiving a single parameter, |event|, which will be added to the finish callbacks
+    # @return nil
     def finish &block
       @finish_callbacks << block if block_given?
       nil
     end
 
-    def add_stage new_stage, *new_stage_dependencies, &stage_test_block
+    # Add the passed new stage to this event
+    # @param new_stage - a stage to add to this event
+    # @block - a block with a single parameter |event|; during #dispatch, this block will be called with self immediately prior to executing new_stage's callbacks. new_stage and its callbacks will be skipped (not executed) if this block returns falsy.
+    # @return nil
+    def add_stage new_stage, &stage_test_block
       @stages << new_stage
       @stage_blocks ||= {}
       @stage_blocks[new_stage] = stage_test_block if block_given?
@@ -75,8 +100,30 @@ module Seh
     end
 
     private
+    # Used in #dispatch, run callbacks that match our types on each target in the target closure
+    def run_target_callbacks
+      collect_targets.each do |target|
+        target.each_matching_callback(@types) { |callback| callback.call self }
+      end
+    end
+
+    # Used in #dispatch, run the stage callbacks on this event; to be run after each target had a chance to append callbacks
+    # Callback execution order:
+    #  start callbacks
+    #  stage callabcks - in the order stages were added
+    #  finish callbacks
+    # Callbacks in the same stage have arbitrary execution order
+    def run_stage_callbacks
+      @start_callbacks.each { |block| block.call self }
+      @stages.each do |stage|
+        @stage_callbacks[stage].each { |block| block.call self }
+      end
+      @finish_callbacks.each { |block| block.call self }
+    end
+
+    # Compute the target closure, equal to the set of targets on this event and their observers (and recursive observers)
     def collect_targets
-      all_targets = @targets.dup # @targets must remain the original set of targets on this event, and all_targets will be mutated
+      all_targets = @targets.dup # @targets must remain the original set of targets on this event, and all_targets will be mutated.  NOTE: @targets isn't actually used after collect_targets() is called, so we might remove the .dup()
       observers = Set.new
       begin
         original_size = all_targets.size
@@ -84,11 +131,6 @@ module Seh
         all_targets.merge observers
       end while all_targets.size != original_size
       all_targets
-    end
-
-    def each_stage
-      @stages.each { |stage| yield stage }
-      nil
     end
   end
 end

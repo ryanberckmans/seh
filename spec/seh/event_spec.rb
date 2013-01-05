@@ -7,11 +7,11 @@ module Seh
     context "new stage system example" do
       before :each do
         subject.add_stage :melee_attempt
-        subject.add_stage(:melee_hit, :melee_attempt) { |event| event.attack_hit? }
-        subject.add_stage(:melee_miss, :melee_attempt) { |event| !event.attack_hit? }
+        subject.add_stage(:melee_hit) { |event| event.attack_hit? }
+        subject.add_stage(:melee_miss) { |event| !event.attack_hit? }
         subject.add_stage :melee_something_else
-        subject.add_stage :melee_shared, :melee_hit, :melee_something_else
-        subject.add_stage :melee_next, :melee_shared
+        subject.add_stage :melee_shared
+        subject.add_stage :melee_next
         subject.add_stage :melee_fred
       end
 
