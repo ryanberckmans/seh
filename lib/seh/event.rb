@@ -38,7 +38,7 @@ module Seh
     end
 
     # Add targets to this event. May not be called after or during #dispatch
-    # @param targets - zero or more EventTarget objects
+    # @param targets - zero or more EventTarget objects to add to this event
     # @return nil
     def target *targets
       raise "Event#target is disallowed after Event#dispatch is called" unless @state == :ready
@@ -52,6 +52,17 @@ module Seh
     def type *event_types
       raise "Event#type is disallowed after Event#dispatch is called" unless @state == :ready
       event_types.each { |type| @types << type }
+      nil
+    end
+
+    # Add the passed new stage to this event
+    # @param new_stage - a stage to add to this event
+    # @block - a block with a single parameter |event|; during #dispatch, this block will be called with self immediately prior to executing new_stage's callbacks. new_stage and its callbacks will be skipped (not executed) if this block returns falsy.
+    # @return nil
+    def add_stage new_stage, &stage_decision_block
+      raise "Event#add_stage is disallowed after Event#dispatch is called" unless @state == :ready
+      @stages << new_stage
+      @stage_decision_blocks[new_stage] = stage_decision_block if block_given?
       nil
     end
 
@@ -86,16 +97,6 @@ module Seh
     # @return nil
     def finish &block
       @finish_callbacks << block if block_given?
-      nil
-    end
-
-    # Add the passed new stage to this event
-    # @param new_stage - a stage to add to this event
-    # @block - a block with a single parameter |event|; during #dispatch, this block will be called with self immediately prior to executing new_stage's callbacks. new_stage and its callbacks will be skipped (not executed) if this block returns falsy.
-    # @return nil
-    def add_stage new_stage, &stage_decision_block
-      @stages << new_stage
-      @stage_decision_blocks[new_stage] = stage_decision_block if block_given?
       nil
     end
 

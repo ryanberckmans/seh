@@ -14,12 +14,6 @@ module Seh
         subject.add_stage :melee_next
         subject.add_stage :melee_fred
       end
-
-      it "puts each_stage" do
-        subject.each_stage do |stage| puts stage end
-        puts "NEXT"
-        subject.each_stage do |stage| puts stage end
-      end
     end
   end
 end
