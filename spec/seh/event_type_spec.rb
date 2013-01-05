@@ -24,6 +24,16 @@ module Seh
       it { subject.match([]).should be_false }
     end
 
+    context "with nil type which should match everything" do
+      subject { EventType.new nil }
+      it { subject.match([nil]).should be_true }
+      it { subject.match([]).should be_true }
+      it { subject.match([@type]).should be_true }
+      it { subject.match([@type, :another, :bar]).should be_true }
+      it { subject.match([:foo, :bar, @type]).should be_true }
+      it { subject.match([:wrong_type, :bar, :bazz]).should be_true }
+    end
+
     context "And with only basic types nested" do
       subject { EventType::And.new @type1, @type2, @type3 }
 

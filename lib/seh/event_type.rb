@@ -6,6 +6,7 @@ module Seh
 
     # @param types - an Array of types
     def match types
+      return true if @type.nil? # define nil to match everything
       types.include? @type
     end
 
