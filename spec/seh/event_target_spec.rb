@@ -60,7 +60,6 @@ module Seh
           subject.each_matching_callback([@event_type3]) { |block| expected_blocks << block }
           expected_blocks.should_not include(@block3) # @block3 would have been wrapped in another block during bind_once, so we don't expect to find it
           expected_blocks.size.should eq(1) # the single block in the array is the new block wrapping @block3
-          puts expected_blocks[0]
           expected_blocks[0].call
 
           # After @block3 was called, we shouldn't expect to find it anymore
