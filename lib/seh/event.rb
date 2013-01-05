@@ -11,6 +11,7 @@ module Seh
       @start_callbacks = []
       @finish_callbacks = []
       @stage_callbacks = {}
+      @stage_decision_blocks = {}
       @stages = Set.new
       yield self if block_given?
     end
@@ -92,10 +93,9 @@ module Seh
     # @param new_stage - a stage to add to this event
     # @block - a block with a single parameter |event|; during #dispatch, this block will be called with self immediately prior to executing new_stage's callbacks. new_stage and its callbacks will be skipped (not executed) if this block returns falsy.
     # @return nil
-    def add_stage new_stage, &stage_test_block
+    def add_stage new_stage, &stage_decision_block
       @stages << new_stage
-      @stage_blocks ||= {}
-      @stage_blocks[new_stage] = stage_test_block if block_given?
+      @stage_decision_blocks[new_stage] = stage_decision_block if block_given?
       nil
     end
 
