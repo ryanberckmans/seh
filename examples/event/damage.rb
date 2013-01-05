@@ -3,27 +3,25 @@ require_relative "hostile"
 
 module Event
   class << self
-    def damage( event, damager, receiver, base_damage )
+    def damage event, damager, receiver, damage
       hostile event, damager, receiver
       
       event.target damager, receiver
       event.type :damage
       event.damager = damager
       event.receiver = receiver
-      event.base_damage = base_damage
-      event.damage = base_damage
       
-      event.add_stage :damage_add, :start
-      event.add_stage :damage_multiply, :damage_add
-      event.add_stage :damage_apply, :damage_multiply
+      event.damage = damage
+      event.damage_add = 0
+      event.damage_multiply = 1.0
+      
+      event.add_stage :damage_add
+      event.add_stage :damage_multiply
+      event.add_stage :damage_apply
 
-      begin
-        event.add_stage :should_raise, :does_not_exist
-        raise "should not happen"
-      rescue Seh::Event::StageNotFoundError => stage_not_found
-      end
-
-      event.damage_apply { event.receiver.hp -= event.damage }
+      event.bind(:damage_add) { event.damage += event.damage_add }
+      event.bind(:damage_multiply) { event.damage *= event.damage_multiply }
+      event.bind(:damage_apply) { event.receiver.hp -= event.damage if event.damage > 0 }
       nil
     end
   end
