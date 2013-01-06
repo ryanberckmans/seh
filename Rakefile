@@ -13,20 +13,45 @@ task :benchmark do
   require_relative 'examples/mob'
   require_relative 'examples/event/damage'
 
+  def test name
+    start_time = Time.now
+    500000.times do
+      yield
+    end
+    elapsed = Time.now - start_time
+    puts "#{name.to_s} took: #{elapsed}"
+    elapsed
+  end
+
+  def setup bob, fred
+    damage_shield = Seh::EventTarget::Default.new
+    damage_shield.bind(:damage) { |event| event.start { event.damage_add -= 0 } }
+    bob.observers << damage_shield
+    
+    fred.bind(:hostile) { "oh no, hostile on fred" }
+  end
+
   bob = Mob.new
   fred = Mob.new
 
-  damage_shield = Seh::EventTarget::Default.new
-  damage_shield.bind(:damage) { |event| event.start { event.damage_add -= 0 } }
-  bob.observers << damage_shield
+  setup bob, fred
 
-  fred.bind(:hostile) { "oh no, hostile on fred" }
-  
-  start_time = Time.now
-  100000.times do
+  no_template_time_elapsed = test "no template" do
     e = Seh::Event.new
     Event::damage e, bob, fred, 0
     e.dispatch
   end
-  puts "took: #{Time.now - start_time}"
+
+  bob = Mob.new
+  fred = Mob.new
+
+  setup bob, fred
+
+  with_template_time_elapsed = test "with template" do
+    e = Seh::Event.new Event::DAMAGE_TEMPLATE
+    Event::damage_with_template e, bob, fred, 0
+    e.dispatch
+  end
+
+  puts "template time savings: #{100 - 100.0 * with_template_time_elapsed / no_template_time_elapsed}%"
 end
