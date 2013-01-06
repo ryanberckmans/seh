@@ -14,7 +14,7 @@ module Seh
 
     it "wraps a non-EventType in an EventType" do
       type = :not_an_EventType
-      puts EventType.should_receive(:new).with(type).once.and_call_original
+      EventType.should_receive(:new).with(type).once.and_call_original
       bind = EventBind.new type, &@block
       bind.event_type.should be_a(EventType)
     end
