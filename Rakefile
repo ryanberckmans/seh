@@ -23,7 +23,7 @@ task :benchmark do
   fred.bind(:hostile) { "oh no, hostile on fred" }
   
   start_time = Time.now
-  10000.times do
+  100000.times do
     e = Seh::Event.new
     Event::damage e, bob, fred, 0
     e.dispatch
