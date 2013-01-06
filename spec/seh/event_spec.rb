@@ -30,6 +30,67 @@ module Seh
       expect { subject.dispatch }.to raise_error
     end
 
+    context "testing abort" do
+      it "does nothing when #abort is called before #dispatch" do
+        subject.abort
+        subject.should_receive(:run_target_callbacks).never
+        subject.should_receive(:run_stage_callbacks).never
+        subject.dispatch
+      end
+
+      it "visits all targets when #abort is called during a target callback" do
+        type = :foo
+
+        target1 = ObservableEventTarget.new
+        target2 = EventTarget::Default.new
+        target3 = EventTarget::Default.new
+        target1.observers << target3
+
+        target1.bind type do |event| event.abort end
+        
+        @result = 0
+
+        target3.bind type do |event| @result += 2 end
+        target2.bind type do |event| @result += 1 end
+        
+        subject.type type
+        subject.target target1, target2
+        subject.dispatch
+        @result.should eq(3)
+      end
+
+      it "finishes the start stage and then stops when #abort is called during a start callback" do
+        @result = 0
+        subject.start do subject.abort end
+        subject.start do @result += 1 end
+        subject.start do @result += 2 end
+        subject.add_stage :never_happens
+        subject.bind :never_happens do @result += 5 end
+        subject.dispatch
+        @result.should eq(3)
+      end
+
+      it "finishes the current stage and then stops when #abort is called during a stage callback" do
+        @result = 0
+        subject.add_stage :does_happens
+        subject.add_stage :never_happens
+        subject.bind :does_happens do @result += 1; subject.abort end
+        subject.bind :does_happens do @result += 2 end 
+        subject.bind :never_happens do @result += 5 end
+        subject.dispatch
+        @result.should eq(3)
+      end
+
+      it "doesn't run finish callbacks when #abort is called during a stage callback" do
+        @result = 0
+        subject.add_stage :does_happens
+        subject.bind :does_happens do @result += 1; subject.abort end
+        subject.finish do @result += 5 end
+        subject.dispatch
+        @result.should eq(1)
+      end
+    end
+
     context "testing callbacks" do
       before :each do
         @counter = 0

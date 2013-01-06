@@ -13,6 +13,7 @@ module Seh
       @stage_callbacks = {}
       @stage_decision_blocks = {}
       @stages = Set.new
+      @abort = false
       yield self if block_given?
     end
 
@@ -31,9 +32,23 @@ module Seh
     def dispatch
       raise "Event#dispatch may only be called once" unless @state == :ready
       @state = :inflight
+      return if @abort
       run_target_callbacks
       run_stage_callbacks
       @state = :done
+      nil
+    end
+
+    # Abort this Event. After #abort is called, some in-progress work may still be completed.
+    # Abort semantics:
+    #   - if #abort is called before #dispatch, #dispatch return immediately, no target will know the event occurred, and no callbacks will be executed
+    #   - if #abort is called by a target while visiting the set of targets, each target will still receive the event but no stage callbacks will be exewcuted
+    #   - if #abort is called during start callbacks, start will complete and no stage or finish callbacks will be run
+    #   - if #abort is called during a stage callback, the current stage will complete and no other stage or finish callbacks will be run
+    #   - if #abort is called during a finish callback, finish will complete, i.e. calling #abort during a finish callbacks is fairly pointless
+    # @return nil
+    def abort
+      @abort = true
       nil
     end
 
@@ -115,10 +130,13 @@ module Seh
     #  finish callbacks
     # Callbacks in the same stage have arbitrary execution order
     def run_stage_callbacks
+      return if @abort
       @start_callbacks.each { |block| block.call self }
       @stages.each do |stage|
+        return if @abort
         @stage_callbacks[stage].each { |block| block.call self }
       end
+      return if @abort
       @finish_callbacks.each { |block| block.call self }
     end
 
