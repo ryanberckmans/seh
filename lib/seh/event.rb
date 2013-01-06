@@ -62,6 +62,7 @@ module Seh
     def add_stage new_stage, &stage_decision_block
       raise "Event#add_stage is disallowed after Event#dispatch is called" unless @state == :ready
       @stages << new_stage
+      @stage_callbacks[new_stage] ||= []
       @stage_decision_blocks[new_stage] = stage_decision_block if block_given?
       nil
     end
@@ -79,7 +80,6 @@ module Seh
     # @block - a callback receiving a single parameter, |event|, which will be added to stage's callbacks
     # @return nil
     def bind stage, &block
-      @stage_callbacks[stage] ||= []
       @stage_callbacks[stage] << block if block_given?
       nil
     end
