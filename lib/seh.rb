@@ -1,7 +1,4 @@
-require "seh/version"
-require "seh/event_type"
-require "seh/event_target"
-require "seh/event"
+Dir[File.dirname(__FILE__) + '/seh/*.rb'].each {|file| require file }
 
 module Seh
   class << self
