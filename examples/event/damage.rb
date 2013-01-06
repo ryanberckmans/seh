@@ -3,6 +3,19 @@ require_relative "hostile"
 
 module Event
   class << self
+    def damage_template event_template
+      hostile_template event_template
+      event_template.types << :damage
+      event_template.add_stage :damage_add
+      event_template.add_stage :damage_multiply
+      event_template.add_stage :damage_apply
+
+      event_template.bind(:damage_add) { |event| event.damage += event.damage_add }
+      event_template.bind(:damage_multiply) { |event| event.damage *= event.damage_multiply }
+      event_template.bind(:damage_apply) { |event| event.receiver.hp -= event.damage if event.damage > 0 }
+      nil
+    end
+
     def damage event, damager, receiver, damage
       hostile event, damager, receiver
       
@@ -25,4 +38,5 @@ module Event
       nil
     end
   end
+  DAMAGE_TEMPLATE = damage_template Seh::EventTemplate.new
 end
