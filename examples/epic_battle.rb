@@ -4,6 +4,26 @@ require 'seh'
 require_relative 'event'
 require_relative 'event_color'
 
+# run ruby examples/epic_battle.rb
+#
+# The output is colorized to help visualize the Seh::Event objects.
+#
+# This example uses most of the Seh API and simulates a battle between two combatants, Fred and Jim.
+# Fred and Jim will continue melee-attacking each other until one is dead. Each has abilities which dynamically influence the result of the combat.
+#
+# examples/event/hostile.rb is a template for a Seh::Event representing a hostile action
+#
+# examples/event/damage.rb is a template for a Seh::Event representing one combatant doing damage to another. damage.rb calls hostile.rb, making each damage event also a hostile event.
+#
+# examples/event/melee_attack.rb is a template for a Seh::Event representing an attempted melee attack by one combatant on another. A successfully melee attack will create and dispach a new damage event, representing the damage inflicted by the strike.
+#
+# A melee attack may be thwarted by a dodge or riposte, which are modeled as callbacks on melee_attack events. The melee attack event has no direct knowledge that it may be affected by a dodge or riposte.
+#
+# Damage may be reduced by the shield of the ancients ability, or reflected by the reflexive barrier ability. The damage event has no direct knowledge of these abilities, which are modeled as callbacks.
+#
+# The battle is orated by BenevolentOverlord, a singleton which is wired to Combatant#observers.  This causes BenevolentOverlord to receive each event targeting any instance of Combatant.
+#
+
 # An observer which reports on the battle. BenevolentOverlord sees each event affecting any Combatant due to Combatant#observers
 class BenevolentOverlord
   include Seh::EventTarget
@@ -34,6 +54,7 @@ class BenevolentOverlord
 
   def melee_battle_hostile_callbacks
     bind :hostile do |event|
+      # hostile is pretty spammy so comment it out
       # event.start { puts_color_event event.object_id, "hostile start: #{event.aggressor} on #{event.aggressee} (event id #{event.object_id})" }
       # event.finish { puts_color_event event.object_id, "hostile finish: #{event.aggressor} on #{event.aggressee} (event id #{event.object_id})" }
     end
