@@ -21,7 +21,7 @@ module Seh
     # #dispatch may only be called once
     # Dispatch algorithm:
     #  1. determine the full set of targets affected by this event
-    #  2. run target callbacks which match this event's types
+    #  2. run callbacks on targets which match this event's types
     #  3. run stage callbacks contained in this event; typically targets will append stage callbacks to this event using Event#bind, #start, #finish
     #     Callback execution order:
     #       start callbacks
