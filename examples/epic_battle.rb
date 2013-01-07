@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 
 require 'seh'
-require_relative "event"
+require_relative 'event'
+require_relative 'event_color'
 
 # An observer which reports on the battle. BenevolentOverlord sees each event affecting any Combatant due to Combatant#observers
 class BenevolentOverlord
@@ -15,26 +16,26 @@ class BenevolentOverlord
   def melee_battle_melee_attack_callbacks
     bind :melee_attack do |event|
       event.bind :melee_miss do
-        puts "#{event.attacker}'s hit misses #{event.defender}. (event id #{event.object_id})"
+        puts_color_event event.object_id, "#{event.attacker} misses #{event.defender}. (event id #{event.object_id})"
       end
       
       event.bind :melee_hit do
-        puts "#{event.attacker} successfully hits #{event.defender} for an initial damage of #{event.attack_damage}! (event id #{event.object_id})"
+        puts_color_event event.object_id, "#{event.attacker} successfully hits #{event.defender} for an initial damage of #{event.attack_damage}! (event id #{event.object_id})"
       end
     end
   end
 
   def melee_battle_damage_callbacks
     bind :damage do |event|
-      event.start { puts "#{event.damager} tries to do #{event.damage} damage to #{event.receiver} (event id #{event.object_id})" }
-      event.finish { puts "#{event.damager} did #{event.damage > 0 ? event.damage : 0} damage to #{event.receiver} (event id #{event.object_id})" }
+      event.start { puts_color_event event.object_id, "#{event.damager} tries to do #{event.damage} damage to #{event.receiver} (event id #{event.object_id})" }
+      event.finish { puts_color_event event.object_id, "#{event.damager} did #{event.damage > 0 ? event.damage : 0} damage to #{event.receiver} (event id #{event.object_id})" }
     end
   end
 
   def melee_battle_hostile_callbacks
     bind :hostile do |event|
-      # event.start { puts "hostile start: #{event.aggressor} on #{event.aggressee} (event id #{event.object_id})" }
-      # event.finish { puts "hostile finish: #{event.aggressor} on #{event.aggressee} (event id #{event.object_id})" }
+      # event.start { puts_color_event event.object_id, "hostile start: #{event.aggressor} on #{event.aggressee} (event id #{event.object_id})" }
+      # event.finish { puts_color_event event.object_id, "hostile finish: #{event.aggressor} on #{event.aggressee} (event id #{event.object_id})" }
     end
   end
 
@@ -47,7 +48,7 @@ class Combatant
   attr_accessor :name, :hp, :affects
   def initialize name
     @name = name
-    @hp = 50
+    @hp = 40
     @affects = {}
   end
 
@@ -94,7 +95,7 @@ def dodge combatant
       if event.defender == combatant && event.attack_hit && coin_flip
         event.attack_hit = false
         event.abort
-        puts "#{event.attacker} tries to hit #{event.defender}, who dodges! (event id #{event.object_id})"
+        puts_color_event event.object_id, "#{event.attacker} narrowly misses #{event.defender}, who dodges! (event id #{event.object_id})"
       end
     end
   end
@@ -108,7 +109,7 @@ def riposte combatant
       if event.defender == combatant && event.attack_hit && coin_flip && coin_flip
         event.attack_hit = false
         event.abort
-        puts "#{event.attacker} attacks #{event.defender}, who parries and responds with a lightning-fast riposte! (event id #{event.object_id})"
+        puts_color_event event.object_id, "#{event.attacker} attacks #{event.defender}, who parries and responds with a lightning-fast riposte! (event id #{event.object_id})"
         melee_attack event.defender, event.attacker
       end
     end
@@ -124,7 +125,7 @@ def shield_of_the_ancients combatant
     event.bind :damage_modify do
       next unless event.receiver == combatant
       event.damage_reduction += SHIELD_AMOUNT
-      puts "#{combatant}'s shield of the ancients reduces his damage taken by #{SHIELD_AMOUNT} (event id #{event.object_id})"
+      puts_color_event event.object_id, "#{combatant}'s shield of the ancients reduces his damage taken by #{SHIELD_AMOUNT} (event id #{event.object_id})"
     end
   end
 end
@@ -139,7 +140,7 @@ def reflexive_barrier combatant
       temp = event.damager
       event.damager = event.receiver
       event.receiver = temp
-      puts "#{combatant} uses his reflexive barrier to reflect damage back at #{event.receiver} (event id #{event.object_id})"
+      puts_color_event event.object_id, "#{combatant} uses his reflexive barrier to reflect damage back at #{event.receiver} (event id #{event.object_id})"
       combatant.affects[:reflexive_barrier].disconnect
       combatant.affects.delete :reflexive_barrier
     end
@@ -153,7 +154,7 @@ def serenity combatant
   combatant.affects[:serenity] = combatant.bind :hostile do |event|
     next unless event.aggressee == combatant
     event.abort 
-    puts "#{combatant}'s serenity prevents hostile action by #{event.aggressor}"
+    puts_color_event event.object_id, "#{combatant}'s serenity prevents hostile action by #{event.aggressor} (event id #{event.object_id})"
     combatant.affects[:serenity].disconnect
     combatant.affects.delete :serenity
   end
