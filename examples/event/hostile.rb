@@ -5,7 +5,7 @@ module Event
       event.type :hostile
       event.aggressor = aggressor
       event.aggressee = aggressee
-      nil
+      event
     end
   end
 end
