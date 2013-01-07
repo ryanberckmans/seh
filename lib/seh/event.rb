@@ -139,6 +139,7 @@ module Seh
       @start_callbacks.each { |block| block.call self }
       @stages.each do |stage|
         return if @abort
+        next if @stage_decision_blocks.key? stage and not @stage_decision_blocks[stage].call self
         @stage_callbacks[stage].each { |block| block.call self }
       end
       return if @abort

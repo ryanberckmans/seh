@@ -111,6 +111,24 @@ module Seh
           subject.add_stage stage
           expect { subject.bind stage, &@callback}.to change{ subject.send :run_stage_callbacks; @counter }.from(0).to(1)
         end
+        it "runs a stage whose stage_decision_block evaluates to true" do
+          @result = 0
+          stage = :should_be_run
+          subject.add_stage stage do true end
+          subject.bind stage do @result += 1 end
+          subject.bind stage do @result += 2 end
+          subject.dispatch
+          @result.should eq(3)
+        end
+        it "skips a stage whose stage_decision_block evaluates to false" do
+          @result = 0
+          stage = :should_not_be_run
+          subject.add_stage stage do false end
+          subject.bind stage do @result += 1 end
+          subject.bind stage do @result += 2 end
+          subject.dispatch
+          @result.should eq(0)
+        end
         it "runs start before a stage" do
           result = []
           subject.add_stage :stage2
