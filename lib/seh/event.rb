@@ -52,6 +52,11 @@ module Seh
       nil
     end
 
+    # @return true if #abort has been called, false otherwise
+    def aborted?
+      @abort
+    end
+
     # Add targets to this event. May not be called after or during #dispatch
     # @param targets - zero or more EventTarget objects to add to this event
     # @return nil
